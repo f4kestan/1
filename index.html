@@ -326,60 +326,69 @@
       };
       const thunder = `<path d="M32 14 l-6 12 h12 z" fill="#f5b301"/><path d="M20 48 a10 10 0 0 1 0-20 a12 12 0 0 1 23-3 a9 9 0 0 1 1 23 z" fill="#6b7280"/>`;
 
+      // wttr.in 使用 WWO（World Weather Online）天气码
+      const fog = `<g stroke="#9aa4b2" stroke-width="4" stroke-linecap="round"><line x1="20" y1="40" x2="44" y2="40"/><line x1="18" y1="48" x2="46" y2="48"/></g>`;
       const map = {
-        0: sun,
-        1: sunCloud,
-        2: cloud,
-        3: cloudDark,
-        45: `<g stroke="#9aa4b2" stroke-width="4" stroke-linecap="round"><line x1="20" y1="40" x2="44" y2="40"/><line x1="18" y1="48" x2="46" y2="48"/></g>`,
-        48: `<g stroke="#9aa4b2" stroke-width="4" stroke-linecap="round"><line x1="20" y1="40" x2="44" y2="40"/><line x1="18" y1="48" x2="46" y2="48"/></g>`,
-        51: rain(3), 53: rain(3), 55: rain(3),
-        61: rain(3), 63: rain(3), 65: rain(4), 66: rain(3), 67: rain(3),
-        71: snow(3), 73: snow(3), 75: snow(4), 77: snow(2),
-        80: rain(2), 81: rain(3), 82: rain(4),
-        85: snow(2), 86: snow(3),
-        95: thunder, 96: thunder, 99: thunder
+        113: sun,                                        // 晴
+        116: sunCloud,                                   // 晴间多云
+        119: cloud,                                      // 多云
+        122: cloudDark,                                  // 阴
+        143: fog, 248: fog, 260: fog,                    // 雾
+        176: rain(2), 263: rain(2), 266: rain(2),        // 局部阵雨/小雨
+        293: rain(2), 296: rain(2), 299: rain(3),        // 毛毛雨/小雨
+        302: rain(3), 305: rain(3), 308: rain(4),        // 中雨/大雨
+        311: rain(2), 314: rain(3), 317: rain(4),        // 冻雨
+        323: snow(2), 326: snow(2), 329: snow(3),        // 小雪/中雪
+        332: snow(3), 335: snow(4), 338: snow(4),        // 大雪
+        350: snow(2), 353: rain(2), 356: rain(3), 359: rain(4),  // 冰雹/雨
+        362: snow(2), 365: snow(3), 368: snow(4),        // 雨夹雪/雪
+        371: snow(3), 374: snow(3),                      // 阵雪
+        386: thunder, 389: thunder, 392: thunder,        // 雷阵雨
+        395: thunder                                     // 强雷阵雨
       };
       const inner = map[code] || cloud;
       return `<svg width="${s}" height="${s}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
     }
 
     const weatherText = {
-      0: '晴', 1: '晴间多云', 2: '多云', 3: '阴',
-      45: '雾', 48: '雾凇',
-      51: '小毛毛雨', 53: '毛毛雨', 55: '大毛毛雨',
-      61: '小雨', 63: '中雨', 65: '大雨', 66: '冻雨', 67: '冻雨',
-      71: '小雪', 73: '中雪', 75: '大雪', 77: '雪粒',
-      80: '阵雨', 81: '阵雨', 82: '强阵雨',
-      85: '阵雪', 86: '强阵雪',
-      95: '雷阵雨', 96: '雷阵雨伴冰雹', 99: '强雷阵雨伴冰雹'
+      113: '晴', 116: '晴间多云', 119: '多云', 122: '阴',
+      143: '雾', 248: '雾', 260: '雾',
+      176: '局部阵雨', 263: '小雨', 266: '小雨',
+      293: '毛毛雨', 296: '小雨', 299: '小雨',
+      302: '中雨', 305: '中雨', 308: '大雨',
+      311: '冻雨', 314: '冻雨', 317: '冻雨',
+      323: '小雪', 326: '小雪', 329: '中雪',
+      332: '中雪', 335: '大雪', 338: '大雪',
+      350: '冰雹', 353: '阵雨', 356: '阵雨', 359: '强阵雨',
+      362: '雨夹雪', 365: '雨夹雪', 368: '大雪',
+      371: '阵雪', 374: '阵雪',
+      386: '雷阵雨', 389: '雷阵雨', 392: '雷阵雨', 395: '强雷阵雨'
     };
 
     // ===== 月相 =====
-    function svgMoon(phase, size) {
+    // illumination 为照亮百分比 0-100；waxing 表示盈(变大)
+    function svgMoon(illumination, waxing, size) {
       const s = size || 44;
       const r = 16, cx = 22, cy = 22;
-      const illum = Math.abs(phase - 0.5) * 2;
+      const illum = illumination / 100; // 0-1
+      // 依据照亮比例和盈亏方向计算阴影圆偏移
+      const off = r * (1 - Math.abs(illum * 2 - 1));
       let shadow;
-      if (phase < 0.5) {
-        const off = r * (1 - illum);
-        shadow = `<circle cx="${cx + off}" cy="${cy}" r="${r}" fill="#6b7280"/>`;
+      if (illum < 0.5) {
+        shadow = `<circle cx="${cx + (waxing ? off : -off)}" cy="${cy}" r="${r}" fill="#6b7280"/>`;
       } else {
-        const off = r * (1 - illum);
-        shadow = `<circle cx="${cx - off}" cy="${cy}" r="${r}" fill="#6b7280"/>`;
+        shadow = `<circle cx="${cx + (waxing ? -off : off)}" cy="${cy}" r="${r}" fill="#6b7280"/>`;
       }
       return `<svg width="${s}" height="${s}" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#e8edf5"/>${shadow}</svg>`;
     }
 
-    function moonName(phase) {
-      if (phase < 0.03 || phase > 0.97) return '新月';
-      if (phase < 0.22) return '娥眉月';
-      if (phase < 0.28) return '上弦月';
-      if (phase < 0.47) return '盈凸月';
-      if (phase < 0.53) return '满月';
-      if (phase < 0.72) return '亏凸月';
-      if (phase < 0.78) return '下弦月';
-      return '残月';
+    function moonNameFromText(text) {
+      const m = {
+        'New Moon': '新月', 'Waxing Crescent': '娥眉月', 'First Quarter': '上弦月',
+        'Waxing Gibbous': '盈凸月', 'Full Moon': '满月', 'Waning Gibbous': '亏凸月',
+        'Last Quarter': '下弦月', 'Waning Crescent': '残月'
+      };
+      return m[text] || text || '未知';
     }
 
     function windDir(deg) {
@@ -405,11 +414,7 @@
     }
 
     async function loadWeather() {
-      const url = 'https://api.open-meteo.com/v1/forecast'
-        + '?latitude=43.16&longitude=124.35'
-        + '&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,relative_humidity_2m,precipitation'
-        + '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,moonrise,moonset,moon_phase'
-        + '&timezone=Asia%2FShanghai&forecast_days=16';
+      const url = 'https://wttr.in/Siping?format=j1&lang=zh';
 
       // 自动重试：最多 3 次，间隔递增（1s / 2s / 4s）
       let data = null;
@@ -432,20 +437,24 @@
       }
 
       try {
+        const cur = data.current_condition[0];
+        const today = data.weather[0];
 
-        const code = data.current.weather_code;
-        const desc = weatherText[code] || '未知';
-        const temp = Math.round(data.current.temperature_2m);
+        // wttr.in 天气码为字符串，转数字
+        const code = parseInt(cur.weatherCode, 10);
+        const desc = weatherText[code] || cur.weatherDesc[0].value;
+        const temp = Math.round(parseFloat(cur.temp_C));
+        const feels = Math.round(parseFloat(cur.FeelsLikeC));
 
         document.getElementById('wIcon').innerHTML = svgWeather(code, 52);
         document.getElementById('wTemp').textContent = temp + '°C';
         document.getElementById('wDesc').innerHTML =
-          '<b>' + desc + '</b><br>体感 ' + Math.round(data.current.apparent_temperature) + '°C';
+          '<b>' + desc + '</b><br>体感 ' + feels + '°C';
 
-        const humidity = data.current.relative_humidity_2m;
-        const wind = Math.round(data.current.wind_speed_10m);
-        const winddir = windDir(data.current.wind_direction_10m);
-        const precip = data.current.precipitation;
+        const humidity = cur.humidity;
+        const wind = Math.round(parseFloat(cur.windspeedKmph));
+        const winddir = windDir(parseFloat(cur.winddirDegree));
+        const precip = parseFloat(cur.precipMM).toFixed(1);
 
         const metaHTML =
           '<div class="meta-item">' + metaIcon('<path d="M3 10 a7 7 0 0 1 14-2 5 5 0 0 1 0 10 H3 z"/>') + '湿度<b>' + humidity + '%</b></div>'
@@ -454,30 +463,33 @@
           + '<div class="meta-item">' + metaIcon('<circle cx="12" cy="12" r="9"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>') + '日出/日落<b id="wSun">--</b></div>';
         document.getElementById('wMeta').innerHTML = metaHTML;
 
-        const phase = data.daily.moon_phase[0];
+        // 月相：wttr.in 返回照亮百分比 + 文本月相名
+        const astro = today.astronomy[0];
+        const illumination = parseInt(astro.moon_illumination, 10) || 0;
+        const phaseText = astro.moon_phase;
+        const waxing = /Waxing|New|First/.test(phaseText);
         document.getElementById('wMoon').innerHTML =
-          svgMoon(phase, 44)
-          + '<div class="moon-info"><b>' + moonName(phase) + '</b><br>月出 ' + (data.daily.moonrise[0] || '--').slice(11, 16)
-          + ' · 月落 ' + (data.daily.moonset[0] || '--').slice(11, 16) + '</div>';
+          svgMoon(illumination, waxing, 44)
+          + '<div class="moon-info"><b>' + moonNameFromText(phaseText) + '</b><br>月出 ' + (astro.moonrise || '--')
+          + ' · 月落 ' + (astro.moonset || '--') + '</div>';
 
-        sunriseToday = data.daily.sunrise[0];
-        sunsetToday = data.daily.sunset[0];
-        document.getElementById('wSun').textContent =
-          sunriseToday.slice(11, 16) + ' / ' + sunsetToday.slice(11, 16);
+        // 日出日落（供主题切换使用）
+        sunriseToday = astro.sunrise;
+        sunsetToday = astro.sunset;
+        document.getElementById('wSun').textContent = sunriseToday + ' / ' + sunsetToday;
 
-        const times = data.daily.time;
-        const codes = data.daily.weather_code;
-        const highs = data.daily.temperature_2m_max;
-        const lows = data.daily.temperature_2m_min;
+        // 3 天预报
+        const days = data.weather;
         let html = '';
-        for (let i = 0; i < times.length; i++) {
-          const d = new Date(times[i] + 'T00:00:00');
+        for (let i = 0; i < days.length; i++) {
+          const d = new Date(days[i].date + 'T00:00:00');
           const label = (d.getMonth() + 1) + '/' + d.getDate();
+          const c = parseInt(days[i].hourly[0].weatherCode, 10);
           html += '<div class="w-day">'
             + '<div class="wd-date">' + label + '</div>'
-            + '<div class="wd-icon">' + svgWeather(codes[i], 26) + '</div>'
-            + '<div class="wd-high">' + Math.round(highs[i]) + '°</div>'
-            + '<div class="wd-low">' + Math.round(lows[i]) + '°</div>'
+            + '<div class="wd-icon">' + svgWeather(c, 26) + '</div>'
+            + '<div class="wd-high">' + Math.round(parseFloat(days[i].maxtempC)) + '°</div>'
+            + '<div class="wd-low">' + Math.round(parseFloat(days[i].mintempC)) + '°</div>'
             + '</div>';
         }
         document.getElementById('wForecast').innerHTML = html;
@@ -501,17 +513,31 @@
     }
 
     // ===== 根据日出日落切换深浅主题 =====
+    // 将 "6:41 AM" / "16:14 PM" 这类 12 小时制时间转为分钟数
+    function timeToMin(str) {
+      if (!str) return null;
+      const m = String(str).match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (!m) return null;
+      let h = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      const ap = (m[3] || '').toUpperCase();
+      if (ap === 'PM' && h !== 12) h += 12;
+      if (ap === 'AM' && h === 12) h = 0;
+      return h * 60 + min;
+    }
+
     function applyTheme() {
-      if (!sunriseToday || !sunsetToday) return;
+      // 兜底：天气失败时用本地默认日出日落时间，保证主题仍能切换
+      const sr = timeToMin(sunriseToday) ?? 6 * 60 + 30;
+      const ss = timeToMin(sunsetToday) ?? 17 * 60 + 0;
       const bj = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
       const nowMin = bj.getHours() * 60 + bj.getMinutes();
-      const sr = parseInt(sunriseToday.slice(11, 13)) * 60 + parseInt(sunriseToday.slice(14, 16));
-      const ss = parseInt(sunsetToday.slice(11, 13)) * 60 + parseInt(sunsetToday.slice(14, 16));
       const isDay = nowMin >= sr && nowMin < ss;
       document.body.classList.toggle('light', isDay);
     }
 
     loadWeather();
+    applyTheme(); // 立即用兜底时间切换一次，不等天气
     setInterval(applyTheme, 60000);
   </script>
 </body>
