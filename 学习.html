@@ -110,7 +110,7 @@ function render() {
   }
   container.innerHTML = html;
 }
-function toggle(head) { head.parentElement.classList.toggle("open"); }
+function toggle(el) { el.closest(".cat").classList.toggle("open"); }
 render();
 </script>
 </body>
