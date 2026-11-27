@@ -24,8 +24,10 @@ body { min-height:100vh; background:var(--bg); color:var(--text);
 h1 { font-size:24px; font-weight:700; margin-bottom:6px; line-height:1.4; }
 .meta { color:var(--muted); font-size:13px; margin-bottom:20px; }
 .content { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px 26px;
-  font-size:16px; line-height:1.9; white-space:pre-wrap; word-break:break-word;
+  font-size:16px; line-height:1.95; word-break:break-word;
   transition:background .4s,border .4s; }
+.content p { margin:0 0 1.1em; text-align:justify; }
+.content p:last-child { margin-bottom:0; }
 .loading { color:var(--muted); text-align:center; padding:40px; }
 .footer { text-align:center; color:var(--muted); font-size:12px; margin-top:24px; opacity:.7; }
 </style>
@@ -55,14 +57,30 @@ fetch('reader_index.json').then(r => r.json()).then(index => {
   }
   document.getElementById('docTitle').textContent = doc.title;
   document.getElementById('docMeta').textContent = doc.cat + ' / ' + doc.sub + ' · ' + doc.pages + ' 页';
-  // 加载对应 txt
-  return fetch('text/' + doc.file).then(r => r.text()).then(text => {
-    document.getElementById('docContent').textContent = text;
-    document.getElementById('pageInfo').textContent = '共 ' + (text.length / 1000).toFixed(0) + ' 千字';
+  // 加载清洗后的文本，按段落渲染
+  return fetch('clean/' + doc.file).then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.text();
+  }).then(text => {
+    const trimmed = text.replace(/\s+/g, ' ').trim();
+    if (!trimmed) {
+      document.getElementById('docContent').innerHTML =
+        '<div class="loading">此文档无可用文字层（扫描版），请通过目录页「网盘下载」获取原 PDF。</div>';
+      document.getElementById('pageInfo').textContent = '';
+      return;
+    }
+    const paras = text.split(/\n\s*\n/).filter(p => p.trim());
+    document.getElementById('docContent').innerHTML =
+      paras.map(p => '<p>' + escapeHtml(p.trim()) + '</p>').join('');
+    document.getElementById('pageInfo').textContent = '共 ' + (trimmed.length / 1000).toFixed(0) + ' 千字';
   });
 }).catch(e => {
   document.getElementById('docContent').innerHTML = '<div class="loading">加载失败：' + e.message + '</div>';
 });
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 </script>
 </body>
 </html>
